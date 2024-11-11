@@ -1,4 +1,5 @@
 # ScrobbleBox - an offline Rockbox scrobble logger for XBMC4Xbox
+Pairs well with [rb-scrobbler](https://github.com/jeselnik/rb-scrobbler)
 
 ## How to use:
 - Install ScrobbleBox to your scripts folder in XBMC4Xbox
