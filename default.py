@@ -11,7 +11,6 @@ def write_scrobble_log(song_title, artist_name, album_name, track_pos, duration,
         with open(log_file_path, 'a') as log_file:
             log_file.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(
                 artist_name, album_name, song_title, track_pos, duration, rating, timestamp, musicbrainz_id))
-        print("Logged track: {0} - {1}".format(artist_name, song_title))  # Debug message
     except Exception as e:
         print("Error writing to log file:", e)  # Error message if writing fails
 
@@ -38,20 +37,13 @@ def monitor_music():
     while True:
         # Check if something is playing
         if player.isPlaying():
-            print("Player is playing")
-
+            
             # Retrieve song title, artist, album, track position (time), and duration using xbmc.getInfoLabel()
             current_song = xbmc.getInfoLabel("MusicPlayer.Title")
             current_artist = xbmc.getInfoLabel("MusicPlayer.Artist")
             current_album = xbmc.getInfoLabel("MusicPlayer.Album")
             current_duration = xbmc.getInfoLabel("MusicPlayer.Duration")
             current_track_time = xbmc.getInfoLabel("MusicPlayer.Time")
-
-            print("Current Song:", current_song)
-            print("Artist:", current_artist)
-            print("Album:", current_album)
-            print("Duration:", current_duration)
-            print("Track Position (Time):", current_track_time)
 
             # Handle missing track time
             track_pos = convert_time_to_seconds(current_track_time) if current_track_time else 0  # Convert Time to seconds
@@ -79,10 +71,6 @@ def monitor_music():
                         show_notification("{0} - {1} ({2})".format(current_artist, current_song, current_album))
                         # Update the last song to the current one, but exclude the timestamp
                         last_song = (current_song, current_artist, current_album, track_pos, duration, rating)
-                        print("Song logged:", current_song)  # Debug message for logging
-
-        else:
-            print("Player is not playing.")  # Debug message if player isn't playing
 
         # Sleep for a while before checking again
         time.sleep(5)
