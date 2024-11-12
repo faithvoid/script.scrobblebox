@@ -5,3 +5,4 @@ A simple XBMC4Xbox addon that logs scrobbled songs to a "scrobbler.log" file, li
 - Install ScrobbleBox to your scripts folder in XBMC4Xbox
 - Run in the background, listen to music and enjoy! (All tracks are automatically scrobbled after reaching at least the halfway point!)
 - To upload scrobbles, grab your scrobbles from "scrobbler.log" from your Q directory and use a program such as rb-scrobbler to upload it!
+- To run in the background, add this to the autoexec.py file in your scripts folder: xbmc.executebuiltin('XBMC.RunScript(Q:\\scripts\\ScrobbleBox\\default.py)')
