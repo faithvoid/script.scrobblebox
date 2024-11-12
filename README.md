@@ -11,5 +11,4 @@ A simple XBMC4Xbox addon that logs scrobbled songs to a "scrobbler.log" file, li
 - Seeking through tracks can make duplicate log entries appear. 
 
 ## TODO:
-- Allow enabling/disabling of ScrobbleBox's script.
 - Allow upload to either last.fm or libre.fm (or at least to a host PC)
