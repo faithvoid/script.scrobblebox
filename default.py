@@ -9,7 +9,7 @@ def main():
         ("Start ScrobbleBox", "RunScript(Q:\\scripts\\ScrobbleBox\\scrobblebox.py)"),
         ("Stop ScrobbleBox", "StopScript(Q:\\scripts\\ScrobbleBox\\settings.py)"),
         ("Settings", "RunScript(Q:\\scripts\\ScrobbleBox\\settings.py)"),
-        ("Upload Scrobbles", "RunScript(Q:\\scripts\\ScrobbleBox\\upload.py)"),
+#        ("Upload Scrobbles", "RunScript(Q:\\scripts\\ScrobbleBox\\upload.py)"),
         ("Enable/Disable On Startup", "RunScript(Q:\\scripts\\ScrobbleBox\\autoexec-scrobblebox.py)"),
     ]
     
