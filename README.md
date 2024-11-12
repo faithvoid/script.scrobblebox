@@ -15,3 +15,6 @@ A simple XBMC4Xbox addon that logs scrobbled songs to a "scrobbler.log" file, li
 
 ## TODO:
 - Allow upload to either last.fm or libre.fm (or at least to a host PC)
+
+## Why?
+Because I do a lot of my music listening on my original Xbox, as it's the main thing connected to my media center with a CD/DVD drive, so I like being able to scrobble my tracks as I listen to them. As I have an iPod that I log scrobbles onto offline, I figured I wanted to make a similar offline solution for the original Xbox, to futureproof scrobbling on XBMC4Xbox against further SSL/TLS degradation. 
