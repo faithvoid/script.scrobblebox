@@ -55,7 +55,7 @@ def remove_line():
 def show_dialog():
     # Create a dialog to ask the user what action to take
     dialog = xbmcgui.Dialog()
-    result = dialog.select("Select Action", ["Enable ScrobbleBox On Startup", "Disable ScrobbleBox On Startup"])
+    result = dialog.select("ScrobbleBox - Startup", ["Enable ScrobbleBox On Startup", "Disable ScrobbleBox On Startup"])
 
     if result == 0:  # "Add line" option
         add_line()
