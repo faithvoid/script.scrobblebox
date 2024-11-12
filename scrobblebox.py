@@ -2,7 +2,7 @@ import xbmc
 import time
 import os
 
-# Path to the .scrobbler.log file (note the leading period)
+# Path to the .scrobbler.log file
 log_file_path = xbmc.translatePath("Q:\scrobbler.log")
 
 # Function to write the scrobble log in the required format
