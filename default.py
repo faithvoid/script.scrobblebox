@@ -3,7 +3,7 @@ import time
 import os
 
 # Path to the .scrobbler.log file (note the leading period)
-log_file_path = xbmc.translatePath("scrobbler.log")
+log_file_path = xbmc.translatePath("Q:\scrobbler.log")
 
 # Function to write the scrobble log in the required format
 def write_scrobble_log(song_title, artist_name, album_name, track_pos, duration, rating, timestamp, musicbrainz_id=""):
