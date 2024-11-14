@@ -6,11 +6,11 @@ import os
 log_file_path = xbmc.translatePath("Q:\scrobbler.log")
 
 # Function to write the scrobble log in the required format
-def write_scrobble_log(song_title, artist_name, album_name, track_pos, duration, rating, timestamp, musicbrainz_id=""):
+def write_scrobble_log(song_title, artist_name, album_name, track_pos, duration, rating, timestamp):
     try:
         with open(log_file_path, 'a') as log_file:
             log_file.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(
-                artist_name, album_name, song_title, track_pos, duration, rating, timestamp, musicbrainz_id))
+                artist_name, album_name, song_title, track_pos, duration, rating, timestamp))
     except Exception as e:
         print("Error writing to log file:", e)  # Error message if writing fails
 
