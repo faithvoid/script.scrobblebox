@@ -33,7 +33,7 @@ def convert_time_to_seconds(time_str):
         return 0
 
 def show_notification(message):
-    xbmc.executebuiltin('XBMC.Notification(ScrobbleBox, Logged: {0}, 5000)'.format(message))
+    xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Logged: {0}", 5000)'.format(message))
 
 # Monitor music playback and log scrobbles
 def monitor_music():
