@@ -1,9 +1,13 @@
 # ScrobbleBox - an Rockbox-style scrobble logger for XBMC4Xbox (now with online scrobbling support!)
 A simple XBMC4Xbox addon that logs scrobbled songs onto Last.fm/Libre.fm/ListenBrainz/Maloja, or to a "scrobbler.log" file, like Rockbox does.
 
-![1](screenshots/main.jpg)
-![2](screenshots/menu1.jpg)
-![3](screenshots/menu2.jpg)
+![Main](screenshots/main.jpg)
+![Last.fm](screenshots/settings1.jpg)
+![ListenBrainz](screenshots/settings2.jpg)
+![Libre.fm](screenshots/settings3.jpg)
+![Maloja](screenshots/settings4.jpg)
+![General Settings](screenshots/settings5.jpg)
+
 
 ## How to use:
 - Install ScrobbleBox to your scripts folder in XBMC4Xbox
