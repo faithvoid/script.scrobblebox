@@ -9,6 +9,15 @@
     <setting id="lastfm_upload_listening" type="bool" label="Upload to Last.fm while listening" default="false" />
     <setting id="lastfm_upload" type="bool" label="Upload to Last.fm on Startup" default="false" />
     </category>
+    <category label="ListenBrainz">
+    <setting type="lsep" label="ListenBrainz Settings" />
+    <setting id="listenbrainz_api_key" type="text" label="API Key:" default="" />
+    <setting id="listenbrainz_api_secret" type="text" label="API Secret:" default="" />
+    <setting id="listenbrainz_user_token" type="text" label="User Token:" default="" />
+    <setting type="lsep" label="" />
+    <setting id="listenbrainz_upload_listening" type="bool" label="Upload to ListenBrainz while listening" default="false" />
+    <setting id="listenbrainz_upload" type="bool" label="Upload to ListenBrainz on Startup" default="false" />
+    </category>
     <category label="Libre.fm">
     <setting type="lsep" label="Libre.fm Settings" />
     <setting id="librefm_api_key" type="text" label="API Key:" default="" />
@@ -19,22 +28,13 @@
     <setting id="librefm_upload_listening" type="bool" label="Upload to Libre.fm while listening" default="false" />
     <setting id="librefm_upload" type="bool" label="Upload to Libre.fm on Startup" default="false" />
     </category>
-        <category label="ListenBrainz">
-    <setting type="lsep" label="ListenBrainz Settings" />
-    <setting id="listenbrainz_api_key" type="text" label="API Key:" default="" />
-    <setting id="listenbrainz_api_secret" type="text" label="API Secret:" default="" />
-    <setting id="listenbrainz_user_token" type="text" label="User Token:" default="" />
+    <category label="Maloja">
+    <setting type="lsep" label="Maloja Settings" />
+    <setting id="maloja_api_url" type="text" label="Maloja API URL" default="http://localhost:42010/apis/audioscrobbler" />
+    <setting id="maloja_api_key" type="text" label="Maloja API Key" default="" />
     <setting type="lsep" label="" />
-    <setting id="listenbrainz_upload_listening" type="bool" label="Upload to ListenBrainz while listening" default="false" />
-    <setting id="listenbrainz_upload" type="bool" label="Upload to ListenBrainz on Startup" default="false" />
-    </category>
-    <category label="Majola">
-    <setting type="lsep" label="Majola Settings" />
-    <setting id="majola_api_url" type="text" label="Maloja API URL" default="http://localhost:42010/apis/audioscrobbler" />
-    <setting id="majola_api_key" type="text" label="Maloja API Key" default="" />
-    <setting type="lsep" label="" />
-    <setting id="majola_upload_listening" type="bool" label="Upload to Majola while listening" default="false" />
-    <setting id="majola_upload" type="bool" label="Upload to Majola on startup" default="false" />
+    <setting id="maloja_upload_listening" type="bool" label="Upload to Maloja while listening" default="false" />
+    <setting id="maloja_upload" type="bool" label="Upload to Maloja on startup" default="false" />
     </category>
     <category label="General">
     <setting id="show_notifications" type="bool" label="Show Notifications" default="true" />
