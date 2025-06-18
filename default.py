@@ -78,9 +78,9 @@ def convert_time_to_seconds(time_str):
         return 0
 
 # Show notifications if enabled
-def show_notification(message):
+def show_notification(message, icon=ICON_PATH):
     if show_notifications_setting:
-        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "%s", 5000, "%s")' % (message, ICON_PATH))
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "%s", 5000, "%s")' % (message, icon))
 
 # Get session key from Last.fm
 def get_session_key(api_key, api_secret, username, password):
@@ -114,11 +114,50 @@ def get_session_key(api_key, api_secret, username, password):
     except urllib2.HTTPError as e:
         error_msg = e.read()
         print("HTTPError %s: %s" % (e.code, error_msg))
-        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "HTTP %s: %s", 10000, "%s")' % (e.code, error_msg, ICON_PATH))
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "HTTP %s: %s", 10000, "%s")' % (e.code, error_msg, LASTFM_ICON))
         raise
     except Exception as e:
         print("Exception:", str(e))
-        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Auth error: %s", 10000, "%s")' % (e, ICON_PATH))
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Auth error: %s", 10000, "%s")' % (e, LASTFM_ICON))
+        raise
+
+# Get session key from Libre.fm
+def get_session_key_librefm(api_key, api_secret, username, password):
+    try:
+        # Ensure all values are UTF-8 encoded strings
+        def encode(val):
+            if isinstance(val, unicode):
+                return val.encode('utf-8')
+            return str(val)
+        params = {
+            'api_key': encode(api_key),
+            'method': 'auth.getMobileSession',
+            'password': encode(password),  # IMPORTANT: plaintext, not MD5!
+            'username': encode(username),
+        }
+        # Build API signature: concat all params (alphabetical order), then append secret, then md5
+        sig_str = ''.join([k + params[k] for k in sorted(params)]) + api_secret
+        api_sig = hashlib.md5(sig_str.encode('utf-8')).hexdigest()
+        params['api_sig'] = api_sig
+        params['format'] = 'json'
+        data = urllib.urlencode(params)
+        url = 'https://libre.fm/2.0/'
+        req = urllib2.Request(url, data)
+        response = urllib2.urlopen(req)
+        result = json.loads(response.read())
+        print("Last.fm response:", result)
+        if "session" in result and "key" in result["session"]:
+            return result['session']['key']
+        else:
+            raise Exception("No session key in response: %s" % result)
+    except urllib2.HTTPError as e:
+        error_msg = e.read()
+        print("HTTPError %s: %s" % (e.code, error_msg))
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "HTTP %s: %s", 10000, "%s")' % (e.code, error_msg, LIBREFM_ICON))
+        raise
+    except Exception as e:
+        print("Exception:", str(e))
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Auth error: %s", 10000, "%s")' % (e, LIBREFM_ICON))
         raise
 
 # Scrobble tracks to Last.fm
@@ -141,6 +180,32 @@ def scrobble_track(api_key, api_secret, session_key, scrobble_data):
             params[k] = params[k].encode('utf-8')
     data = urllib.urlencode(params)
     url = "https://ws.audioscrobbler.com/2.0/"
+    req = urllib2.Request(url, data)
+    response = urllib2.urlopen(req)
+    import json
+    result = json.loads(response.read())
+    return result
+
+# Scrobble tracks to Last.fm
+def scrobble_track_librefm(api_key, api_secret, session_key, scrobble_data):
+    params = {
+        'method': 'track.scrobble',
+        'api_key': api_key,
+        'sk': session_key,
+        'artist[0]': scrobble_data['artist'],
+        'track[0]': scrobble_data['title'],
+        'album[0]': scrobble_data['album'],
+        'timestamp[0]': str(scrobble_data['timestamp']),
+        # Do NOT include 'format' in the signature calculation, only add to POST
+    }
+    api_sig = generate_api_sig(params, api_secret)
+    params['api_sig'] = api_sig
+    params['format'] = 'json'  # Add after api_sig
+    for k in params:
+        if isinstance(params[k], unicode):
+            params[k] = params[k].encode('utf-8')
+    data = urllib.urlencode(params)
+    url = "https://libre.fm/2.0/"
     req = urllib2.Request(url, data)
     response = urllib2.urlopen(req)
     import json
@@ -193,9 +258,27 @@ if lastfm_upload and not lastfm_upload_listening and lastfm_api_key and lastfm_a
                 print("Failed to scrobble: %s - %s (%s): %s" % (scrobble['artist'], scrobble['title'], scrobble['album'], e))
         if uploaded > 0:
             mark_scrobbles_uploaded(log_file_path, uploaded)
-        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Uploaded %d scrobbles to Last.fm", 5000, "%s")' % (uploaded, ICON_PATH))
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Uploaded %d scrobbles to Last.fm", 5000, "%s")' % (uploaded, LASTFM_ICON))
     except Exception as e:
-        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Last.fm upload failed: %s", 5000, "%s")' % (e, ICON_PATH))
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Last.fm upload failed: %s", 5000, "%s")' % (e, LASTFM_ICON))
+
+# Upload scrobbles to Libre.fm if requested (deprecated)
+if librefm_upload and not librefm_upload_listening and librefm_api_key and librefm_api_secret and librefm_username and librefm_password:
+    try:
+        session_key = get_session_key(librefm_api_key, librefm_api_secret, librefm_username, librefm_password)
+        scrobbles = parse_scrobbler_log(log_file_path)
+        uploaded = 0
+        for scrobble in scrobbles:
+            try:
+                result = scrobble_track_librefm(librefm_api_key, librefm_api_secret, session_key, scrobble)
+                uploaded += 1
+            except Exception as e:
+                print("Failed to scrobble: %s - %s (%s): %s" % (scrobble['artist'], scrobble['title'], scrobble['album'], e))
+        if uploaded > 0:
+            mark_scrobbles_uploaded(log_file_path, uploaded)
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Uploaded %d scrobbles to Libre.fm", 5000, "%s")' % (uploaded, LIBREFM_ICON))
+    except Exception as e:
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Libre.fm upload failed: %s", 5000, "%s")' % (e, LIBREFM_ICON))
 
 # Monitor music playback and log scrobbles
 def monitor_music():
@@ -240,7 +323,7 @@ def monitor_music():
                                 print("Immediate upload failed: %s" % e)
                                 show_notification("Logging to Last.fm failed: %s" % e)
                             try:
-                                result = scrobble_track(librefm_api_key, librefm_api_secret, librefm_session_key, scrobble_data)
+                                result = scrobble_track_librefm(librefm_api_key, librefm_api_secret, librefm_session_key, scrobble_data)
                                 show_notification("Logged to Libre.fm: %s - %s (%s)" % (current_artist, current_song, current_album))
                             except Exception as e:
                                 print("Immediate upload failed: %s" % e)
@@ -260,5 +343,14 @@ if lastfm_upload_listening and lastfm_api_key and lastfm_api_secret and lastfm_u
     except Exception as e:
         show_notification("Last.fm auth failed: %s" % e)
         lastfm_session_key = None
+
+if librefm_upload_listening and librefm_api_key and librefm_api_secret and librefm_username and librefm_password:
+    try:
+        librefm_session_key = get_session_key(librefm_api_key, librefm_api_secret, librefm_username, librefm_password)
+    except Exception as e:
+        show_notification("Libre.fm auth failed: %s" % e)
+        librefm_session_key = None
+else:
+    librefm_session_key = None
 
 monitor_music()
