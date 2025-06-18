@@ -39,6 +39,11 @@ librefm_upload_listening = ADDON.getSetting("librefm_upload_listening") == "true
 listenbrainz_user_token = ADDON.getSetting("listenbrainz_user_token")
 listenbrainz_upload = ADDON.getSetting("listenbrainz_upload") == "true"
 listenbrainz_upload_listening = ADDON.getSetting("listenbrainz_upload_listening") == "true"
+# Majola settings
+majola_api_url = ADDON.getSetting("majola_api_url")
+majola_api_key = ADDON.getSetting("majola_api_key")
+majola_upload = ADDON.getSetting("majola_upload") == "true"
+majola_upload_listening = ADDON.getSetting("majola_upload_listening") == "true"
 
 def md5(s):
     if isinstance(s, unicode):
@@ -165,6 +170,42 @@ def get_session_key_librefm(api_key, api_secret, username, password):
         xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Auth error: %s", 10000, "%s")' % (e, LIBREFM_ICON))
         raise
 
+# Get session key from Majola
+def get_session_key_majola(api_key, api_secret, username, password, api_url):
+    try:
+        def encode(val):
+            if isinstance(val, unicode):
+                return val.encode('utf-8')
+            return str(val)
+        params = {
+            'api_key': encode(api_key),
+            'method': 'auth.getMobileSession',
+            'password': encode(password),
+            'username': encode(username),
+        }
+        sig_str = ''.join([k + params[k] for k in sorted(params)]) + api_secret
+        api_sig = hashlib.md5(sig_str.encode('utf-8')).hexdigest()
+        params['api_sig'] = api_sig
+        params['format'] = 'json'
+        data = urllib.urlencode(params)
+        req = urllib2.Request(api_url, data)
+        response = urllib2.urlopen(req)
+        result = json.loads(response.read())
+        print("Majola response:", result)
+        if "session" in result and "key" in result["session"]:
+            return result['session']['key']
+        else:
+            raise Exception("No session key in response: %s" % result)
+    except urllib2.HTTPError as e:
+        error_msg = e.read()
+        print("HTTPError %s: %s" % (e.code, error_msg))
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "HTTP %s: %s", 10000, "%s")' % (e.code, error_msg, LASTFM_ICON))
+        raise
+    except Exception as e:
+        print("Exception:", str(e))
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Auth error: %s", 10000, "%s")' % (e, LASTFM_ICON))
+        raise
+
 # Scrobble tracks to Last.fm
 def scrobble_track(api_key, api_secret, session_key, scrobble_data):
     params = {
@@ -211,6 +252,25 @@ def scrobble_track_librefm(api_key, api_secret, session_key, scrobble_data):
     data = urllib.urlencode(params)
     url = "https://libre.fm/2.0/"
     req = urllib2.Request(url, data)
+    response = urllib2.urlopen(req)
+    result = json.loads(response.read())
+    return result
+
+def scrobble_track_majola(api_key, scrobble_data, api_url):
+    # Build the scrobble parameters as for Last.fm
+    params = {
+        'method': 'track.scrobble',
+        'api_key': api_key,
+        'artist[0]': scrobble_data['artist'],
+        'track[0]': scrobble_data['title'],
+        'album[0]': scrobble_data['album'],
+        'timestamp[0]': str(scrobble_data['timestamp']),
+        'username': 'user',            # Maloja ignores this, but it's required by the API
+        'password': api_key,           # API key goes here!
+        'format': 'json'
+    }
+    data = urllib.urlencode(params)
+    req = urllib2.Request(api_url, data)
     response = urllib2.urlopen(req)
     result = json.loads(response.read())
     return result
@@ -323,6 +383,24 @@ if listenbrainz_upload and not listenbrainz_upload_listening and listenbrainz_us
     except Exception as e:
         xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "ListenBrainz upload failed: %s", 5000, "%s")' % (e, LISTENBRAINZ_ICON))
 
+# Upload scrobbles to Majola if requested
+if majola_upload and majola_api_key and majola_api_url:
+    try:
+        scrobbles = parse_scrobbler_log(log_file_path)
+        uploaded = 0
+        for scrobble in scrobbles:
+            try:
+                result = scrobble_track_majola(majola_api_key, scrobble, majola_api_url)
+                uploaded += 1
+            except Exception as e:
+                print("Failed to scrobble to Maloja: %s - %s (%s): %s" % (
+                    scrobble['artist'], scrobble['title'], scrobble['album'], e))
+        if uploaded > 0:
+            mark_scrobbles_uploaded(log_file_path, uploaded)
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Uploaded %d scrobbles to Maloja", 5000, "%s")' % (uploaded, ICON_PATH))
+    except Exception as e:
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Maloja upload failed: %s", 5000, "%s")' % (e, ICON_PATH))
+
 # Monitor music playback and log scrobbles
 def monitor_music():
     last_song = None
@@ -427,5 +505,15 @@ if listenbrainz_upload_listening and listenbrainz_user_token:
     listenbrainz_session_key = listenbrainz_user_token  # For compatibility in monitor_music
 else:
     listenbrainz_session_key = None
+
+if majola_upload_listening and majola_api_key and majola_api_url:
+    try:
+        result = scrobble_track_majola(majola_api_key, scrobble_data, majola_api_url)
+        show_notification("Logged to Maloja: %s - %s (%s)" % (
+            current_artist, current_song, current_album))
+        uploaded = True
+    except Exception as e:
+        print("Immediate upload to Maloja failed: %s" % e)
+        show_notification("Logging to Maloja failed: %s" % e)
 
 monitor_music()
