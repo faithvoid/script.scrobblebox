@@ -14,6 +14,7 @@ ADDON = xbmcaddon.Addon(id='script.scrobblebox')
 ICON_PATH = os.path.join(os.path.dirname(__file__), "icon-scrobblebox.png")
 LASTFM_ICON = os.path.join(os.path.dirname(__file__), "icon-lastfm.png")
 LIBREFM_ICON = os.path.join(os.path.dirname(__file__), "icon-librefm.png") # Deprecated
+LISTENBRAINZ_ICON = os.path.join(os.path.dirname(__file__), "icon-listenbrainz.png") # Deprecated
 
 # Path to the scrobbler log
 log_file_path = xbmc.translatePath("Q:\\scrobbler.log")
@@ -34,6 +35,10 @@ librefm_username    = ADDON.getSetting("librefm_username")
 librefm_password    = ADDON.getSetting("librefm_password")
 librefm_upload      = ADDON.getSetting("librefm_upload") == "true"
 librefm_upload_listening = ADDON.getSetting("librefm_upload_listening") == "true"
+# ListenBrainz settings
+listenbrainz_user_token = ADDON.getSetting("listenbrainz_user_token")
+listenbrainz_upload = ADDON.getSetting("listenbrainz_upload") == "true"
+listenbrainz_upload_listening = ADDON.getSetting("listenbrainz_upload_listening") == "true"
 
 def md5(s):
     if isinstance(s, unicode):
@@ -182,7 +187,6 @@ def scrobble_track(api_key, api_secret, session_key, scrobble_data):
     url = "https://ws.audioscrobbler.com/2.0/"
     req = urllib2.Request(url, data)
     response = urllib2.urlopen(req)
-    import json
     result = json.loads(response.read())
     return result
 
@@ -208,7 +212,29 @@ def scrobble_track_librefm(api_key, api_secret, session_key, scrobble_data):
     url = "https://libre.fm/2.0/"
     req = urllib2.Request(url, data)
     response = urllib2.urlopen(req)
-    import json
+    result = json.loads(response.read())
+    return result
+
+# Scrobble tracks to ListenBrainz
+def scrobble_track_listenbrainz(user_token, scrobble_data):
+    url = "https://api.listenbrainz.org/1/submit-listens"
+    headers = {
+        "Authorization": "Token %s" % user_token,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "listen_type": "single",
+        "payload": [{
+            "track_metadata": {
+                "artist_name": scrobble_data['artist'],
+                "track_name": scrobble_data['title'],
+                "release_name": scrobble_data['album']
+            },
+            "listened_at": scrobble_data['timestamp']
+        }]
+    }
+    req = urllib2.Request(url, json.dumps(payload), headers)
+    response = urllib2.urlopen(req)
     result = json.loads(response.read())
     return result
 
@@ -265,7 +291,7 @@ if lastfm_upload and not lastfm_upload_listening and lastfm_api_key and lastfm_a
 # Upload scrobbles to Libre.fm if requested (deprecated)
 if librefm_upload and not librefm_upload_listening and librefm_api_key and librefm_api_secret and librefm_username and librefm_password:
     try:
-        session_key = get_session_key(librefm_api_key, librefm_api_secret, librefm_username, librefm_password)
+        session_key = get_session_key_librefm(librefm_api_key, librefm_api_secret, librefm_username, librefm_password)
         scrobbles = parse_scrobbler_log(log_file_path)
         uploaded = 0
         for scrobble in scrobbles:
@@ -279,6 +305,23 @@ if librefm_upload and not librefm_upload_listening and librefm_api_key and libre
         xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Uploaded %d scrobbles to Libre.fm", 5000, "%s")' % (uploaded, LIBREFM_ICON))
     except Exception as e:
         xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Libre.fm upload failed: %s", 5000, "%s")' % (e, LIBREFM_ICON))
+
+# Upload scrobbles to ListenBrainz if requested
+if listenbrainz_upload and not listenbrainz_upload_listening and listenbrainz_user_token:
+    try:
+        scrobbles = parse_scrobbler_log(log_file_path)
+        uploaded = 0
+        for scrobble in scrobbles:
+            try:
+                result = scrobble_track_listenbrainz(listenbrainz_user_token, scrobble)
+                uploaded += 1
+            except Exception as e:
+                print("Failed to scrobble: %s - %s (%s): %s" % (scrobble['artist'], scrobble['title'], scrobble['album'], e))
+        if uploaded > 0:
+            mark_scrobbles_uploaded(log_file_path, uploaded)
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Uploaded %d scrobbles to ListenBrainz", 5000, "%s")' % (uploaded, LISTENBRAINZ_ICON))
+    except Exception as e:
+        xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "ListenBrainz upload failed: %s", 5000, "%s")' % (e, LISTENBRAINZ_ICON))
 
 # Monitor music playback and log scrobbles
 def monitor_music():
@@ -308,31 +351,58 @@ def monitor_music():
                 song_key = (current_song, current_artist, current_album, track_number)
                 if (track_pos >= duration // 2 or track_pos >= 240):
                     if last_song != song_key:
+                        scrobble_data = {
+                            'artist': current_artist,
+                            'title': current_song,
+                            'album': current_album,
+                            'timestamp': timestamp
+                        }
+                        uploaded = False
+
+                        # Last.fm scrobble
                         if lastfm_upload_listening and lastfm_session_key:
-                            # Upload immediately to Last.fm
-                            scrobble_data = {
-                                'artist': current_artist,
-                                'title': current_song,
-                                'album': current_album,
-                                'timestamp': timestamp
-                            }
                             try:
-                                result = scrobble_track(lastfm_api_key, lastfm_api_secret, lastfm_session_key, scrobble_data)
-                                show_notification("Logged to Last.fm: %s - %s (%s)" % (current_artist, current_song, current_album))
+                                result = scrobble_track(
+                                    lastfm_api_key, lastfm_api_secret, lastfm_session_key, scrobble_data)
+                                show_notification("Logged to Last.fm: %s - %s (%s)" % (
+                                    current_artist, current_song, current_album))
+                                uploaded = True
                             except Exception as e:
-                                print("Immediate upload failed: %s" % e)
+                                print("Immediate upload to Last.fm failed: %s" % e)
                                 show_notification("Logging to Last.fm failed: %s" % e)
+
+                        # Libre.fm scrobble
+                        if librefm_upload_listening and librefm_session_key:
                             try:
-                                result = scrobble_track_librefm(librefm_api_key, librefm_api_secret, librefm_session_key, scrobble_data)
-                                show_notification("Logged to Libre.fm: %s - %s (%s)" % (current_artist, current_song, current_album))
+                                result = scrobble_track_librefm(
+                                    librefm_api_key, librefm_api_secret, librefm_session_key, scrobble_data)
+                                show_notification("Logged to Libre.fm: %s - %s (%s)" % (
+                                    current_artist, current_song, current_album))
+                                uploaded = True
                             except Exception as e:
-                                print("Immediate upload failed: %s" % e)
+                                print("Immediate upload to Libre.fm failed: %s" % e)
                                 show_notification("Logging to Libre.fm failed: %s" % e)
-                        else:
-                            # Write to scrobbler.log
-                            write_scrobble_log(current_song, current_artist, current_album,
-                                               track_number, duration, rating, timestamp)
-                            show_notification("Logged: %s - %s (%s)" % (current_artist, current_song, current_album))
+
+                        # ListenBrainz scrobble
+                        if listenbrainz_upload_listening and listenbrainz_session_key:
+                            try:
+                                result = scrobble_track_listenbrainz(
+                                    listenbrainz_session_key, scrobble_data)
+                                show_notification("Logged to ListenBrainz: %s - %s (%s)" % (
+                                    current_artist, current_song, current_album))
+                                uploaded = True
+                            except Exception as e:
+                                print("Immediate upload to ListenBrainz failed: %s" % e)
+                                show_notification("Logging to ListenBrainz failed: %s" % e)
+
+                        # If not scrobbling to the above sites, scrobble offline.
+                        if not uploaded:
+                            write_scrobble_log(
+                                current_song, current_artist, current_album,
+                                track_number, duration, rating, timestamp)
+                            show_notification("Logged: %s - %s (%s)" % (
+                                current_artist, current_song, current_album))
+
                         last_song = song_key
         time.sleep(5)
 
@@ -352,5 +422,10 @@ if librefm_upload_listening and librefm_api_key and librefm_api_secret and libre
         librefm_session_key = None
 else:
     librefm_session_key = None
+
+if listenbrainz_upload_listening and listenbrainz_user_token:
+    listenbrainz_session_key = listenbrainz_user_token  # For compatibility in monitor_music
+else:
+    listenbrainz_session_key = None
 
 monitor_music()
