@@ -1,0 +1,17 @@
+<addon id="script.scrobblebox"
+       name="ScrobbleBox"
+       version="1.0.0"
+       provider-name="faithvoid">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+    </requires>
+    <extension point="xbmc.python.script" library="default.py">
+        <provides>audio</provides>
+        <cache>no</cache>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>Offline Last.FM/Libre.FM scrobbler for XBMC4Xbox</summary>
+        <description>Log scrobbles from your favourite tracks offline!</description>
+        <platform>all</platform>
+    </extension>
+</addon>

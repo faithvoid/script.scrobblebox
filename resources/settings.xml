@@ -1,0 +1,20 @@
+<settings>
+    <category label="General">
+    <setting id="show_notifications" type="bool" label="Show Notifications" default="true" />
+    </category>
+    <category label="Scrobblers">
+    <setting type="lsep" label="Last.fm Settings" />
+    <setting id="lastfm_api_key" type="text" label="API Key:" default="" />
+    <setting id="lastfm_api_secret" type="text" label="API Secret:" default="" />
+    <setting id="lastfm_username" type="text" label="Username:" default="" />
+    <setting id="lastfm_password" type="text" label="Password:" default="" />
+    <setting type="lsep" label="Libre.fm Settings" />
+    <setting id="librefm_api_key" type="text" label="API Key:" default="" />
+    <setting id="librefm_api_secret" type="text" label="API Secret:" default="" />
+    <setting id="librefm_username" type="text" label="Username:" default="" />
+    <setting id="librefm_password" type="text" label="Password:" default="" />
+    <setting type="lsep" label="Scrobbler Settings" />
+    <setting id="lastfm_upload" type="bool" label="Upload to Last.fm on Startup" default="false" />
+    <setting id="librefm_upload" type="bool" label="Upload to Libre.fm on Startup" default="false" />
+    </category>
+</settings>
