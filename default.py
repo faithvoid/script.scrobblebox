@@ -39,11 +39,11 @@ librefm_upload_listening = ADDON.getSetting("librefm_upload_listening") == "true
 listenbrainz_user_token = ADDON.getSetting("listenbrainz_user_token")
 listenbrainz_upload = ADDON.getSetting("listenbrainz_upload") == "true"
 listenbrainz_upload_listening = ADDON.getSetting("listenbrainz_upload_listening") == "true"
-# Majola settings
-majola_api_url = ADDON.getSetting("majola_api_url")
-majola_api_key = ADDON.getSetting("majola_api_key")
-majola_upload = ADDON.getSetting("majola_upload") == "true"
-majola_upload_listening = ADDON.getSetting("majola_upload_listening") == "true"
+# Maloja settings
+maloja_api_url = ADDON.getSetting("maloja_api_url")
+maloja_api_key = ADDON.getSetting("maloja_api_key")
+maloja_upload = ADDON.getSetting("maloja_upload") == "true"
+maloja_upload_listening = ADDON.getSetting("maloja_upload_listening") == "true"
 
 def md5(s):
     if isinstance(s, unicode):
@@ -170,8 +170,8 @@ def get_session_key_librefm(api_key, api_secret, username, password):
         xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "Auth error: %s", 10000, "%s")' % (e, LIBREFM_ICON))
         raise
 
-# Get session key from Majola
-def get_session_key_majola(api_key, api_secret, username, password, api_url):
+# Get session key from Maloja
+def get_session_key_maloja(api_key, api_secret, username, password, api_url):
     try:
         def encode(val):
             if isinstance(val, unicode):
@@ -191,7 +191,7 @@ def get_session_key_majola(api_key, api_secret, username, password, api_url):
         req = urllib2.Request(api_url, data)
         response = urllib2.urlopen(req)
         result = json.loads(response.read())
-        print("Majola response:", result)
+        print("Maloja response:", result)
         if "session" in result and "key" in result["session"]:
             return result['session']['key']
         else:
@@ -256,7 +256,7 @@ def scrobble_track_librefm(api_key, api_secret, session_key, scrobble_data):
     result = json.loads(response.read())
     return result
 
-def scrobble_track_majola(api_key, scrobble_data, api_url):
+def scrobble_track_maloja(api_key, scrobble_data, api_url):
     # Build the scrobble parameters as for Last.fm
     params = {
         'method': 'track.scrobble',
@@ -383,14 +383,14 @@ if listenbrainz_upload and not listenbrainz_upload_listening and listenbrainz_us
     except Exception as e:
         xbmc.executebuiltin('XBMC.Notification("ScrobbleBox", "ListenBrainz upload failed: %s", 5000, "%s")' % (e, LISTENBRAINZ_ICON))
 
-# Upload scrobbles to Majola if requested
-if majola_upload and majola_api_key and majola_api_url:
+# Upload scrobbles to Maloja if requested
+if maloja_upload and maloja_api_key and maloja_api_url:
     try:
         scrobbles = parse_scrobbler_log(log_file_path)
         uploaded = 0
         for scrobble in scrobbles:
             try:
-                result = scrobble_track_majola(majola_api_key, scrobble, majola_api_url)
+                result = scrobble_track_maloja(maloja_api_key, scrobble, maloja_api_url)
                 uploaded += 1
             except Exception as e:
                 print("Failed to scrobble to Maloja: %s - %s (%s): %s" % (
@@ -443,7 +443,7 @@ def monitor_music():
                                 result = scrobble_track(
                                     lastfm_api_key, lastfm_api_secret, lastfm_session_key, scrobble_data)
                                 show_notification("Logged to Last.fm: %s - %s (%s)" % (
-                                    current_artist, current_song, current_album))
+                                    current_artist, current_song, current_album), LASTFM_ICON)
                                 uploaded = True
                             except Exception as e:
                                 print("Immediate upload to Last.fm failed: %s" % e)
@@ -455,7 +455,7 @@ def monitor_music():
                                 result = scrobble_track_librefm(
                                     librefm_api_key, librefm_api_secret, librefm_session_key, scrobble_data)
                                 show_notification("Logged to Libre.fm: %s - %s (%s)" % (
-                                    current_artist, current_song, current_album))
+                                    current_artist, current_song, current_album), LIBREFM_ICON)
                                 uploaded = True
                             except Exception as e:
                                 print("Immediate upload to Libre.fm failed: %s" % e)
@@ -467,7 +467,7 @@ def monitor_music():
                                 result = scrobble_track_listenbrainz(
                                     listenbrainz_session_key, scrobble_data)
                                 show_notification("Logged to ListenBrainz: %s - %s (%s)" % (
-                                    current_artist, current_song, current_album))
+                                    current_artist, current_song, current_album), LISTENBRAINZ_ICON)
                                 uploaded = True
                             except Exception as e:
                                 print("Immediate upload to ListenBrainz failed: %s" % e)
@@ -479,7 +479,7 @@ def monitor_music():
                                 current_song, current_artist, current_album,
                                 track_number, duration, rating, timestamp)
                             show_notification("Logged: %s - %s (%s)" % (
-                                current_artist, current_song, current_album))
+                                current_artist, current_song, current_album), ICON_PATH)
 
                         last_song = song_key
         time.sleep(5)
@@ -506,11 +506,11 @@ if listenbrainz_upload_listening and listenbrainz_user_token:
 else:
     listenbrainz_session_key = None
 
-if majola_upload_listening and majola_api_key and majola_api_url:
+if maloja_upload_listening and maloja_api_key and maloja_api_url:
     try:
-        result = scrobble_track_majola(majola_api_key, scrobble_data, majola_api_url)
+        result = scrobble_track_maloja(maloja_api_key, scrobble_data, maloja_api_url)
         show_notification("Logged to Maloja: %s - %s (%s)" % (
-            current_artist, current_song, current_album))
+            current_artist, current_song, current_album), MALOJA_ICON)
         uploaded = True
     except Exception as e:
         print("Immediate upload to Maloja failed: %s" % e)
