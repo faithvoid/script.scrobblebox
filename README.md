@@ -1,8 +1,9 @@
 # ScrobbleBox - an offline Rockbox-style scrobble logger for XBMC4Xbox
 A simple XBMC4Xbox addon that logs scrobbled songs to a "scrobbler.log" file, like Rockbox does. Pairs well with [rb-scrobbler](https://github.com/jeselnik/rb-scrobbler)
 
-![1](screenshots/screenshot011.bmp)
-![2](screenshots/screenshot012.bmp)
+![1](screenshots/main.jpg)
+![2](screenshots/menu1.jpg)
+![3](screenshots/menu2.jpg)
 
 ## How to use:
 - Install ScrobbleBox to your scripts folder in XBMC4Xbox
