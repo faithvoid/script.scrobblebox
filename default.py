@@ -17,7 +17,8 @@ LIBREFM_ICON = os.path.join(os.path.dirname(__file__), "icon-librefm.png") # Dep
 LISTENBRAINZ_ICON = os.path.join(os.path.dirname(__file__), "icon-listenbrainz.png") # Deprecated
 
 # Path to the scrobbler log
-log_file_path = xbmc.translatePath("Q:\\scrobbler.log")
+log_folder = ADDON.getSetting("log_folder")
+log_file_path = os.path.join(log_folder, "scrobbler.log")
 
 # Load user settings
 show_notifications_setting = ADDON.getSetting("show_notifications") == "true"
