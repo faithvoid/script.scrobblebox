@@ -14,6 +14,10 @@ A simple XBMC4Xbox addon that logs scrobbled songs onto Last.fm/Libre.fm/ListenB
 - Run ScrobbleBox, select "Start ScrobbleBox", listen to music and enjoy as ScrobbleBox scrobbles in the background! (All tracks are automatically scrobbled after reaching at least the halfway point!)
 - To upload scrobbles, grab your scrobbles from "scrobbler.log" from your Q directory and use a program such as rb-scrobbler to upload it! (uploading directly to last.fm/libre.fm is TBA)
 
+## TODO:
+- Add Trakt support for movies/TV shows.
+- Make API uploading play nicer (maybe by not removing previous tracks and logging scrobbles elsewhere?)
+
 ## Bugs:
 - Seeking through tracks can make duplicate log entries appear.
 - Scrobble posting support is still very new, errors may occur!
